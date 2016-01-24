@@ -1,7 +1,18 @@
-people = concat [[n | m <- [1..3]] | n <- [1..2]]
+import Data.Function (on)
+import Data.List (sortBy)
+
+type Person     = Int
+type Table      = Int
+type Placement  = [Location]
+type Location        = (Person, Table)
+type People     = [Person]
+type Tables     = [Table]
+
+prandom x = mod  (x * 1103515245 + 12345) 1000000000  
+people = shuffle $ concat [[n | m <- [1..6]] | n <- [1..2]]
 tables = [1..length people]
-placements = (zip people tables) ++ [(100,n) | n <- [1..length tables]]
---placements = [(1,1),(1,2),(8,3),(9,4), (100,1),(100,2),(100,3),(100,4)]
+placement = (zip people tables) ++ [(1000,n) | n <- [1..length tables]]
+--placement = [(1,1),(1,2),(8,3),(9,4), (1000,1),(1000,2),(1000,3),(1000,4)]
 
 merge [] ys = ys
 merge (x:xs) ys = x:merge ys xs
@@ -12,24 +23,40 @@ shuffle' xs n
     where (a,b) = splitAt (quot (length xs) 2) xs
 shuffle xs = shuffle' xs (quot (length xs) 2)
 
-anneal [] new_p = reverse new_p
-anneal ((p,t):ps) new_p =
-    anneal ps $ bestNeighbor:new_p
-  where neighbors = filter (\(x,y)->y>=t-1&&y<=t+1) (ps++new_p)
-        bestNeighbor = if p == 100 then (p,t) else best neighbors (p,t)
+runn f x n
+    | n == 0 = []
+    | otherwise = outp:(runn f outp (n-1))
+  where outp = f x
 
-best' [] person acc = (fst person, snd acc)
-best' ((p1,t1):ps) (p,t) acc
-    | abs (p-p1) < abs (p-(fst acc)) = best' ps (p,t) (p1,t1)
-    | otherwise = best' ps (p,t)  acc
+best :: Placement -> Location -> Location
+best' [] person curBest = (fst person, snd curBest)
+best' (trialLoc:placement) curLoc curBest
+    | abs (seeker-candidate) < abs (seeker-(fst curBest)) = best' placement curLoc trialLoc
+    | otherwise = best' placement curLoc  curBest
+  where seeker = fst curLoc
+        candidate = fst trialLoc
 best neighbors placement  = best' neighbors placement (head neighbors)
 
+anneal :: Placement -> Placement
+anneal' [] acc = reverse acc
+anneal' (location:placement) acc =
+    anneal' placement $ bestNeighbor:acc
+  where neighbors = filter (\(x,y)->y>=table-1&&y<=table+1) (placement++acc)
+        person = fst location
+        table = snd location
+        bestNeighbor = if person == 1000 then location else best neighbors location
+anneal placement = anneal' placement []
+
+sortp :: Placement -> Placement
+sortp = sortBy (compare `on` snd)
+
+filtp:: Placement -> Placement
+filtp = filter (\(p,t)->p/=1000)
+
+pre = filtp . sortp
+
 main = do
-    -- print (best [(1,2),(9,4)] (2,3))
-    print placements
-    let foo = anneal placements []
-    print foo
-    print $ (anneal foo [])
-remove i xs = filter (\n -> n/=i) xs
-insert x (table, people) = (table, people++x)
-random x = mod  (x * 1103515245 + 12345) 1000000000  
+    --print (best [(2,1),(3,5),(3,6)] (1,5))
+
+    print $ pre placement
+    print (map pre (runn anneal placement 2))
