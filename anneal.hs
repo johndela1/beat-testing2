@@ -28,23 +28,22 @@ runn f x n
     | otherwise = outp:(runn f outp (n-1))
   where outp = f x
 
-best :: Placement -> Location -> Location
-best' [] person curBest = (fst person, snd curBest)
-best' (trialLoc:placement) curLoc curBest
-    | abs (seeker-candidate) < abs (seeker-(fst curBest)) = best' placement curLoc trialLoc
-    | otherwise = best' placement curLoc  curBest
+bestLoc :: Placement -> Location -> Location
+bestLoc' [] person curBest = (fst person, snd curBest)
+bestLoc' (trialLoc:placement) curLoc curBest
+    | abs (seeker-candidate) < abs (seeker-(fst curBest)) =
+        bestLoc' placement curLoc trialLoc
+    | otherwise = bestLoc' placement curLoc  curBest
   where seeker = fst curLoc
         candidate = fst trialLoc
-best neighbors placement  = best' neighbors placement (head neighbors)
+bestLoc neighbors placement = bestLoc' neighbors placement $ head neighbors
 
 anneal :: Placement -> Placement
 anneal' [] acc = reverse acc
-anneal' (location:placement) acc =
-    anneal' placement $ bestNeighbor:acc
-  where neighbors = filter (\(x,y)->y>=table-1&&y<=table+1) (placement++acc)
-        person = fst location
-        table = snd location
-        bestNeighbor = if person == 1000 then location else best neighbors location
+anneal' (location@(person,table):placement) acc =
+    anneal' placement $ (bestLoc neighbors location):acc
+  where neighbors = filter (\(_,candiate)->abs(table-candiate)<=1)
+                           (placement++acc)
 anneal placement = anneal' placement []
 
 sortp :: Placement -> Placement
@@ -53,7 +52,7 @@ sortp = sortBy (compare `on` snd)
 filtp:: Placement -> Placement
 filtp = filter (\(p,t)->p/=1000)
 
-pre = filtp . sortp
+pre = sortp -- filtp . sortp
 
 main = do
     --print (best [(2,1),(3,5),(3,6)] (1,5))
