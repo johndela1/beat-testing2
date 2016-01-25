@@ -29,23 +29,30 @@ runn f x n
     | otherwise = outp:(runn f outp (n-1))
   where outp = f x
 
-bestLoc :: Placement -> Location -> Location
-bestLoc' [] person curBest = curBest
-bestLoc' (trialLoc:placement) curLoc curBest
-    | abs (seeker-candidate) < abs (seeker-(fst curBest)) =
-        bestLoc' placement curLoc trialLoc
-    | otherwise = bestLoc' placement curLoc  curBest
+chooseLoc comp [] person curBest = curBest
+chooseLoc comp (trialLoc:placement) curLoc curBest
+    | fst trialLoc == 1000 = chooseLoc comp placement curLoc curBest
+    | comp (abs (seeker-candidate)) (abs (seeker-(fst curBest))) =
+        chooseLoc comp placement curLoc trialLoc
+    | otherwise = chooseLoc comp placement curLoc  curBest
   where seeker = fst curLoc
         candidate = fst trialLoc
-bestLoc placement location = bestLoc' placement location $ head placement
+
+bestLoc :: Placement -> Location -> Location
+bestLoc placement location = chooseLoc (<) placement location $ head placement
+
+worstLoc :: Placement -> Location -> Location
+worstLoc placement location = chooseLoc (>) placement location $ head placement
 
 anneal :: Placement -> Placement
-anneal' [] acc = reverse acc
-anneal' (location@(person,table):placement) acc =
-    anneal' placement $ (bestLoc neighbors location):acc
+anneal' [] acc _ = reverse acc
+anneal' (location@(person,table):placement) acc n =
+    anneal' placement choosenLoc (n+1)
   where neighbors = filter (\(_,candiate)->abs(table-candiate)<=1)
                            (placement++acc)
-anneal placement = anneal' placement []
+        choosenLoc = if (mod (prandom n) 2 /= 0) then (bestLoc  neighbors location):acc
+                              else (worstLoc neighbors location):acc
+anneal placement = anneal' placement [] 0
 
 sortp :: Placement -> Placement
 sortp = sortBy (compare `on` snd)
@@ -54,9 +61,8 @@ filtp:: Placement -> Placement
 filtp = filter (\(p,t)->p/=1000)
 
 pre = filtp . sortp
-
 main = do
-    print (bestLoc [(2,1),(3,5),(3,6)] (1,5))
+    print (worstLoc [(2,1),(4,9),(3,6)] (1,5))
     assert (bestLoc [(2,1),(3,5),(3,6)] (1,5) == (2,1))  print "pass"
     print $ pre placement
-    mapM_ (\l->print l) (map pre (runn anneal placement 2))
+    mapM_ (\l->print l) (map pre (runn anneal placement 96))
