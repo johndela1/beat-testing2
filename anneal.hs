@@ -32,6 +32,7 @@ runN f x n
 chooseLoc comp [] _ curBest = curBest
 chooseLoc comp (trialLoc:placement) curLoc curBest
     | fst trialLoc == 1000 = chooseLoc comp placement curLoc curBest
+    | fst curLoc == 1000 = chooseLoc comp placement curLoc curBest
     | comp (abs (seeker-candidate)) (abs (seeker-(fst curBest))) =
         chooseLoc comp placement curLoc trialLoc
     | otherwise = chooseLoc comp placement curLoc  curBest
