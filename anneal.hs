@@ -1,3 +1,4 @@
+import Control.Exception
 import Data.Function (on)
 import Data.List (sortBy)
 
@@ -29,14 +30,14 @@ runn f x n
   where outp = f x
 
 bestLoc :: Placement -> Location -> Location
-bestLoc' [] person curBest = (fst person, snd curBest)
+bestLoc' [] person curBest = curBest
 bestLoc' (trialLoc:placement) curLoc curBest
     | abs (seeker-candidate) < abs (seeker-(fst curBest)) =
         bestLoc' placement curLoc trialLoc
     | otherwise = bestLoc' placement curLoc  curBest
   where seeker = fst curLoc
         candidate = fst trialLoc
-bestLoc neighbors placement = bestLoc' neighbors placement $ head neighbors
+bestLoc placement location = bestLoc' placement location $ head placement
 
 anneal :: Placement -> Placement
 anneal' [] acc = reverse acc
@@ -52,10 +53,10 @@ sortp = sortBy (compare `on` snd)
 filtp:: Placement -> Placement
 filtp = filter (\(p,t)->p/=1000)
 
-pre = sortp -- filtp . sortp
+pre = filtp . sortp
 
 main = do
-    --print (best [(2,1),(3,5),(3,6)] (1,5))
-
+    print (bestLoc [(2,1),(3,5),(3,6)] (1,5))
+    assert (bestLoc [(2,1),(3,5),(3,6)] (1,5) == (2,1))  print "pass"
     print $ pre placement
-    print (map pre (runn anneal placement 2))
+    mapM_ (\l->print l) (map pre (runn anneal placement 2))
