@@ -5,7 +5,7 @@ import Data.List (sortBy)
 type Person     = Int
 type Table      = Int
 type Placement  = [Location]
-type Location        = (Person, Table)
+type Location   = (Person, Table)
 type People     = [Person]
 type Tables     = [Table]
 
@@ -24,9 +24,9 @@ shuffle' xs n
     where (a,b) = splitAt (quot (length xs) 2) xs
 shuffle xs = shuffle' xs (quot (length xs) 2)
 
-runn f x n
+runN f x n
     | n == 0 = []
-    | otherwise = outp:(runn f outp (n-1))
+    | otherwise = outp:(runN f outp (n-1))
   where outp = f x
 
 chooseLoc comp [] person curBest = curBest
@@ -54,6 +54,13 @@ anneal' (location@(person,table):placement) acc n =
                               else (worstLoc neighbors location):acc
 anneal placement = anneal' placement [] 0
 
+--avgVar :: Placement -> Int
+avgVar placement =
+    sum (map (\x->abs (x-avg)) people) / people_cnt
+    where people     = map (\(x,y) -> x) placement
+          people_cnt = fromIntegral (length people)
+          avg        = sum people / people_cnt
+
 sortp :: Placement -> Placement
 sortp = sortBy (compare `on` snd)
 
@@ -65,4 +72,7 @@ main = do
     print (worstLoc [(2,1),(4,9),(3,6)] (1,5))
     assert (bestLoc [(2,1),(3,5),(3,6)] (1,5) == (2,1))  print "pass"
     print $ pre placement
-    mapM_ (\l->print l) (map pre (runn anneal placement 96))
+    mapM_ (\l->print l) (map pre (runN anneal placement 1))
+    print ("avgVar good: "++show (avgVar [(1,1),(1,1)]))
+    print ("avgVar bad: "++show (avgVar [(9,1),(1,1)]))
+    --print ("avgVar: "++show (avgVar [(1,1)] [(1,1)]))
