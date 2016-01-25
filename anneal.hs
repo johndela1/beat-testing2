@@ -29,7 +29,7 @@ runN f x n
     | otherwise = outp:(runN f outp (n-1))
   where outp = f x
 
-chooseLoc comp [] person curBest = curBest
+chooseLoc comp [] _ curBest = curBest
 chooseLoc comp (trialLoc:placement) curLoc curBest
     | fst trialLoc == 1000 = chooseLoc comp placement curLoc curBest
     | comp (abs (seeker-candidate)) (abs (seeker-(fst curBest))) =
@@ -40,6 +40,7 @@ chooseLoc comp (trialLoc:placement) curLoc curBest
 
 bestLoc :: Placement -> Location -> Location
 bestLoc placement location = chooseLoc (<) placement location $ head placement
+bestLoc [] location = location
 
 worstLoc :: Placement -> Location -> Location
 worstLoc placement location = chooseLoc (>) placement location $ head placement
