@@ -58,8 +58,8 @@ anneal placement = anneal' placement [] 0
 
 --avgVar :: Placement -> Int
 avgVar placement =
-    sum (map (\x->abs (x-avg)) people) / people_cnt
-    where people     = map (\(x,y) -> x) placement
+    sum (map (\p->abs (p-avg)) people) / people_cnt
+    where people     = map (\(p,t) -> p) placement
           people_cnt = fromIntegral (length people)
           avg        = sum people / people_cnt
 
