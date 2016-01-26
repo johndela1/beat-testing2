@@ -63,8 +63,8 @@ avgVar placement =
           people_cnt = fromIntegral (length people)
           avg        = sum people / people_cnt
 
-select :: Placement -> Int -> Placement
-select placement table = filter (\(p,t)->table==t) placement
+summary placement = map avgVar (filter (not.null) (sel <*> placement))
+    where sel = (map (\table->filter(\(_,t)->table==t)) tables)
 
 sortp :: Placement -> Placement
 sortp = sortBy (compare `on` snd)
