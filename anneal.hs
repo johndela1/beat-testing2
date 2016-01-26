@@ -56,11 +56,12 @@ anneal' (location@(person,table):placement) acc n =
                               else (worstLoc neighbors location):acc
 anneal placement = anneal' placement [] 0
 
-avgVar :: Placement -> Int
-avgVar placement = quot (sum (map (\p->abs p-avg) people))  people_cnt
+--avgVar :: Placement -> Int
+avgVar placement =
+    sum (map (\p->abs (p-avg)) people) / people_cnt
     where people     = map (\(p,t) -> p) placement
           people_cnt = fromIntegral (length people)
-          avg        = quot (sum people) people_cnt
+          avg        = sum people / people_cnt
 
 select :: Placement -> Int -> Placement
 select placement table = filter (\(p,t)->table==t) placement
