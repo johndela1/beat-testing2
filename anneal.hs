@@ -72,12 +72,12 @@ sortp = sortBy (compare `on` snd)
 filtp:: Placement -> Placement
 filtp = filter (\(p,t)->p/=1000)
 
-pre = filtp . sortp
+pre =  sortp -- filtp . sortp
 main = do
-    print (worstLoc [(2,1),(4,9),(3,6)] (1,5))
+    assert (worstLoc [(2,1),(4,9),(3,6)] (1,5) == (4,9)) print "pass"
     assert (bestLoc [(2,1),(3,5),(3,6)] (1,5) == (2,1))  print "pass"
-    print $ pre placement
-    mapM_ (\l->print l) (map pre (runN anneal placement 1))
-    print ("avgVar good: "++show (avgVar [(1,1),(1,1)]))
-    print ("avgVar bad: "++show (avgVar [(9,1),(1,1)]))
-    --print ("avgVar: "++show (avgVar [(1,1)] [(1,1)]))
+    assert (length (anneal placement) == length placement) print "pass"
+    let p = [(1.0,1),(2.0, 1),(1.0,2),(3.0,2), (1.0,3),(9.0,3)]
+    print placement
+    print p
+    print (summary [p])
