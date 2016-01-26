@@ -2,7 +2,7 @@ import Control.Exception
 import Data.Function (on)
 import Data.List (sortBy)
 
-type Person     = Int
+type Person     = Float
 type Table      = Int
 type Placement  = [Location]
 type Location   = (Person, Table)
