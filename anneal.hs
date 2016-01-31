@@ -10,10 +10,9 @@ type People     = [Person]
 type Tables     = [Table]
 
 prandom x = mod  (x * 1103515245 + 12345) 1000000000  
-people = shuffle $ concat [[n | m <- [1..6]] | n <- [1..2]]
-tables = [1..length people]
-placement = (zip people tables) ++ [(1000,n) | n <- [1..length tables]]
---placement = [(1,1),(1,2),(8,3),(9,4), (1000,1),(1000,2),(1000,3),(1000,4)]
+people = shuffle $ concat [[n | m <- [1..9]] | n <- [1..50]]
+tables = [1..10]
+placement = (zip people (concat (repeat tables)))  ++ [(1000,n) | n <- tables]
 
 merge [] ys = ys
 merge (x:xs) ys = x:merge ys xs
@@ -77,7 +76,15 @@ main = do
     assert (worstLoc [(2,1),(4,9),(3,6)] (1,5) == (4,9)) print "pass"
     assert (bestLoc [(2,1),(3,5),(3,6)] (1,5) == (2,1))  print "pass"
     assert (length (anneal placement) == length placement) print "pass"
-    let p = [(1.0,1),(2.0, 1),(1.0,2),(3.0,2), (1.0,3),(9.0,3)]
-    print placement
-    print p
-    print (summary [p])
+
+    let p = placement --[(1.0,1),(2.0, 1),(1.0,2),(3.0,2), (9.0,3),(9.0,3),(7.0,4)]
+    let runs = runN anneal p 5
+    let report [] = do print "done"
+    let report (r:rs) = if rs == [] then print "done" else do
+           -- print $ sortp r
+            --print ((show (summary [r])) ++ ", " ++ (show (sum (summary[r]))))
+            print (show (sum (summary[r])))
+            report rs
+    --print placement
+    print $ pre p
+    report runs
