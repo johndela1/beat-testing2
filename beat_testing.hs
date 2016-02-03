@@ -196,11 +196,20 @@ import Data.Ratio
 	  (print 'use-valid-pattern-name)))
     (print 'must-specify-pattern-and-bpm))
 --}
+
 -- (define (pattern->deltas pattern bpm)
-deltas :: ((Float, Float),Float,[Int]) -> Float
-deltas ((nBeats, beat_unit),bpm,(x:xs)) = millisPerBeat
-   where millisPerBeat = 1000*beat_unit/nBeats/bpm * 60
+deltas :: ((Float, Float),Float,[Int]) -> [Float]
+deltas ((nBeats, beat_unit),bpm,notes) = foo notes millisPerSubBeat
+   where millisPerBeat = 1000*beat_unit/nBeats/bpm*secInMin
          millisPerSubBeat = millisPerBeat / nBeats
+         secInMin = 60
+         foo [] _ = []
+         foo (n:ns) t
+            | n==1 = t:foo ns millisPerSubBeat
+            | n==0 = foo ns (t+millisPerSubBeat) 
 main = do
     let easy4 = ((4.0,4.0),60.0,[1,1,1,1])
+    let easy3 = ((3.0,4.0),60.0,[1,1,1])
+
     print $ deltas easy4
+    print $ deltas easy3
