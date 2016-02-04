@@ -209,10 +209,23 @@ deltas ((nBeats, beat_unit),bpm,notes) = foo notes millisPerSubBeat
 
 close :: Int -> Int -> Bool
 close t1 t2 = abs (t1-t2) < toler
+
+matches :: [Int] -> [Int] -> [Int]
+matches [] _ =  []
+matches (t:ts) dts = if (match /= 9999) then match:matches ts dts else matches ts dts
+    where match = best $ filter (close t) dts
+          best = foldl (\acc x -> if (abs (t-acc)) > x then x else acc) 9999
+--  (define (find-match ts l)
+ --   (cond
+  --   ((null? l) '())
+   --  ((close-enough (car l) ts) (car l))
+    -- (else (find-match ts (cdr l)))))
+
 main = do
     let easy4 = ((4.0,4.0),120.0,[1,1,1,1])
     let easy3 = ((3.0,4.0),60.0,[1,1,1])
 
     print $ deltas easy4
     print $ deltas easy3
-    print $ close 100 51
+    print $ close 100 100
+    print $ matches [100, 200, 300] [50, 201, 290]
