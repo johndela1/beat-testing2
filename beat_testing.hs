@@ -215,12 +215,18 @@ matches :: [Int] -> [Int] -> [(Int,Int)]
 matches [] _ =  []
 matches (t:ts) dts = if (match /= 9999) then (t,match-t):matches ts dts' else matches ts dts'
     where match = best $ filter (close t) dts
-          best = foldl (\acc x -> if (abs (t-acc)) > x then x else acc) 9999
---  (define (find-match ts l)
- --   (cond
-  --   ((null? l) '())
-   --  ((close-enough (car l) ts) (car l))
-    -- (else (find-match ts (cdr l)))))
+          best ts = if ts == [] then 9999 else minimumBy compare ts
+          dts' = (delete match dts)
+misses :: [Int] -> [Int] -> [Int]
+misses [] dts = dts
+misses (t:ts) dts = misses ts dts'
+    where match = best $ filter (close t) dts
+          best ts = if ts == [] then 9999 else minimumBy compare ts
+          dts' = (delete match dts)
+
+extras :: [Int] -> [(Int,Int)] -> [Int]
+extras xs1 xs2 =
+    filter (\t->not (elem t (map (\(x,_)->x) xs2))) xs1
 
 main = do
     let easy4 = ((4.0,4.0),120.0,[1,1,1,1])
@@ -229,4 +235,13 @@ main = do
     print $ deltas easy4
     print $ deltas easy3
     print $ close 100 100
-    print $ matches [100, 200, 300] [50, 201, 290]
+    print [100, 200,202, 300,400]
+    print [50, 201, 290]
+    print $ matches [100, 200,202, 300,400] [50, 201, 290]
+    let mis = misses [100, 200,202, 300,400] [50, 201, 290]
+    let mats = matches [100, 200,202, 300,400] [50, 201, 290]
+    let exs = extras [100, 200,202, 300,400] mats
+    print mis
+    print mats
+    print exs
+
