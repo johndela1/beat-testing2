@@ -1,4 +1,5 @@
 import Data.Ratio
+import Data.List
 {--
 #!/usr/local/bin/csi -s
 
@@ -210,9 +211,9 @@ deltas ((nBeats, beat_unit),bpm,notes) = foo notes millisPerSubBeat
 close :: Int -> Int -> Bool
 close t1 t2 = abs (t1-t2) < toler
 
-matches :: [Int] -> [Int] -> [Int]
+matches :: [Int] -> [Int] -> [(Int,Int)]
 matches [] _ =  []
-matches (t:ts) dts = if (match /= 9999) then match:matches ts dts else matches ts dts
+matches (t:ts) dts = if (match /= 9999) then (t,match-t):matches ts dts' else matches ts dts'
     where match = best $ filter (close t) dts
           best = foldl (\acc x -> if (abs (t-acc)) > x then x else acc) 9999
 --  (define (find-match ts l)
