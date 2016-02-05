@@ -209,45 +209,21 @@ deltas ((nBeats, beat_unit),bpm,notes) = foo notes millisPerSubBeat
             | n==1 = t:foo ns millisPerSubBeat
             | n==0 = foo ns (t+millisPerSubBeat) 
 
-close :: Int -> Int -> Bool
-close t1 t2 = abs (t1-t2) < toler
 
-bestMatch :: Int -> [Int] -> Int
-bestMatch t = head.sortBy (compare `on`abs.(t-))
 
-matches :: [Int] -> [Int] -> [(Int,Int)]
-matches [] _ =  []
-matches (t:ts) dts =
+matches :: ([(Int,Int)],[Int],[Int]) -> Int -> ([(Int,Int)],[Int],[Int])
+matches (acc,ms,dts) t =
     if (close best t)
-        then (t,best-t):matches ts (delete best dts)
-        else matches ts dts
+        then ((best,t-best):acc,ms,(delete best dts))
+        else (acc,t:ms,dts)
     where best = bestMatch t dts
-
-misses :: [Int] -> [Int] -> [Int]
-misses [] dts = dts
-misses (t:ts) dts = misses ts dts'
-    where match = best $ filter (close t) dts
-          best ts = if ts == [] then 9999 else minimumBy compare ts
-          dts' = (delete match dts)
-
-extras :: [Int] -> [(Int,Int)] -> [Int]
-extras xs1 xs2 =
-    filter (\t->not (elem t (map (\(x,_)->x) xs2))) xs1
-
+          close t1 t2 = abs (t1-t2) < toler
+          bestMatch t = head.sortBy (compare `on`abs.(t-))
+analyze dts = foldl  matches  ([],[],dts)
 main = do
     let easy4 = ((4.0,4.0),120.0,[1,1,1,1])
     let easy3 = ((3.0,4.0),60.0,[1,1,1])
 
     print $ deltas easy4
     print $ deltas easy3
-    print $ close 100 100
-    print [100, 200,202, 300,400]
-    print [50, 201, 290]
-    print $ matches [100, 200,202, 300,400] [50, 201, 290]
-    let mis = misses [100, 200,202, 300,400] [50, 201, 290]
-    let mats = matches [100, 200,202, 300,400] [50, 201, 290]
-    let exs = extras [100, 200,202, 300,400] mats
-    print mis
-    print mats
-    print exs
-
+    print (analyze [100,150,200,400] [100,120,190,405])
