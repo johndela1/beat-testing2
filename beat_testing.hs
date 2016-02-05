@@ -1,5 +1,6 @@
 import Data.Ratio
 import Data.List
+import Data.Function
 {--
 #!/usr/local/bin/csi -s
 
@@ -211,12 +212,17 @@ deltas ((nBeats, beat_unit),bpm,notes) = foo notes millisPerSubBeat
 close :: Int -> Int -> Bool
 close t1 t2 = abs (t1-t2) < toler
 
+bestMatch :: Int -> [Int] -> Int
+bestMatch t = head.sortBy (compare `on`abs.(t-))
+
 matches :: [Int] -> [Int] -> [(Int,Int)]
 matches [] _ =  []
-matches (t:ts) dts = if (match /= 9999) then (t,match-t):matches ts dts' else matches ts dts'
-    where match = best $ filter (close t) dts
-          best ts = if ts == [] then 9999 else minimumBy compare ts
-          dts' = (delete match dts)
+matches (t:ts) dts =
+    if (close best t)
+        then (t,best-t):matches ts (delete best dts)
+        else matches ts dts
+    where best = bestMatch t dts
+
 misses :: [Int] -> [Int] -> [Int]
 misses [] dts = dts
 misses (t:ts) dts = misses ts dts'
