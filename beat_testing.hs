@@ -220,6 +220,9 @@ matches (acc,ms,dts) t =
           close t1 t2 = abs (t1-t2) < toler
           bestMatch t = head.sortBy (compare `on`abs.(t-))
 analyze dts = foldl  matches  ([],[],dts)
+
+data Song = Int
+
 main = do
     let easy4 = ((4.0,4.0),120.0,[1,1,1,1])
     let easy3 = ((3.0,4.0),60.0,[1,1,1])
