@@ -1,6 +1,8 @@
 import Data.Ratio
 import Data.List
 import Data.Function
+import System.IO
+import Data.Time.Clock.POSIX
 {--
 #!/usr/local/bin/csi -s
 
@@ -201,7 +203,7 @@ import Data.Function
 toler = 50 -- tolerance in ms
 deltas :: ((Float, Float),Float,[Int]) -> [Float]
 deltas ((nBeats, beat_unit),bpm,notes) = foo notes millisPerSubBeat
-   where millisPerBeat = 1000*beat_unit/nBeats/bpm*secInMin
+   where millisPerBeat = 1000000*beat_unit/nBeats/bpm*secInMin
          millisPerSubBeat = millisPerBeat / nBeats
          secInMin = 60
          foo [] _ = []
@@ -230,3 +232,22 @@ main = do
     print $ deltas easy4
     print $ deltas easy3
     print (analyze [100,150,200,400] [100,120,190,405])
+
+    let timeInMicros = numerator . toRational . (* 1000000) <$> getPOSIXTime
+    let loop n t1 dts = do
+            input <- hWaitForInput stdin (quot n 1000)
+            t2 <- timeInMicros
+            let dt = fromInteger (t2-t1)
+            if input
+                then do
+                    print dt
+                    (do getChar; return ())
+                    if (n-dt) > 0 then loop (n-dt) t2 (dt:dts) else return dts
+                else do
+                    print "expired timer"
+                    if (n-dt) > 0 then loop (n-dt) (t2-(toInteger n)) dts else return dts
+    t <- timeInMicros
+    let n = 3000000::Int
+    res <- loop n t []
+    print (reverse res)
+    print "done"
