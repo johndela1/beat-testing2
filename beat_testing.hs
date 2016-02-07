@@ -10,10 +10,10 @@ import System.Posix.Unistd
 
 toler = 250000 -- tolerance in microseconds
 deltas :: ((Float, Float),Float,[Int]) -> [Int]
-deltas ((nBeats, beat_unit),bpm,notes) = foo notes uSecsPerSubBeat
-   where uSecsPerBeat = 1000000*beat_unit/bpm*secInMin
+deltas ((nBeats, beatUnit),bpm,notes) = foo notes uSecsPerSubBeat
+   where uSecsPerBeat = 1000000*beatUnit/bpm*secsInMin
          uSecsPerSubBeat = uSecsPerBeat / nBeats
-         secInMin = 60
+         secsInMin = 60
          foo [] _ = []
          foo (n:ns) t
             | n==1 = (ceiling t):foo ns uSecsPerSubBeat
