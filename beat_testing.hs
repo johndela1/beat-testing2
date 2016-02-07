@@ -43,15 +43,20 @@ timeoutCb :: TimerCallback
 timeoutCb evLoopPtr evIoPtr revents = do
   --putStrLn "timeout"
   evUnloop evLoopPtr 1 {- 1 = EVUNLOOP_ONE -}
+
+timestamps' :: ([Int],Int) -> Int -> ([Int],Int)
+timestamps' (acc,t) dt = (t:acc, t+dt)
+timestamps dts = (fst(foldl timestamps' ([],0) dts))
+
 main = do
-    let easy4 = ((4.0,4.0),60.0,[1,1])
+    let easy4 = ((4.0,4.0),60.0,[1,1,1,1])
     let easy3 = ((3.0,4.0),60.0,[1,1,1])
 
 --    print $ deltas easy4
  --   print $ deltas easy3
     --print (analyze [100,150,200,400] [51, 140,190,405,600])
 ---------------------------------------------------
-    let sleep n = do
+    let poll n = do
         stdinWatcher <- mkEvIo
         timeoutWatcher <- mkEvTimer
         stdinCb_ <- mkIoCallback stdinCb
@@ -72,7 +77,7 @@ main = do
 
     let timeInMicros = numerator . toRational . (* 1000000) <$> getPOSIXTime
     let input_loop n t1 dts = do
-            sleep n
+            poll n
             t2 <- timeInMicros
             let dt = fromInteger (t2-t1)
             if (n-dt) > 0
@@ -81,55 +86,24 @@ main = do
                     (do getChar; return ())
                     input_loop (n-dt) t2 (ceiling dt:dts)
                 else return dts
-    let sync x = do
+    let sync x y = do
         if x < 1
             then
                 return ()
             else do
-                print x
-                sleep 1000000
-                sync (x-1)
+                print y
+                usleep 1000000
+                sync (x-1) (y+1)
                 return ()
    -- forkProcess (play (deltas easy4))
-    -- sync 2
-    print "nanosleepbefore1"
-    t1 <- evTime
-    nanosleep 500000000
-    t2 <- evTime
-    print (t2-t1)
-
-    print "usleepbefore1"
-    t1 <- evTime
-    usleep 500000
-    t2 <- evTime
-    print (t2-t1)
-
-    print "internal sleepbefore1"
-    t1 <- evTime
-    sleep 500000
-    t2 <- evTime
-    print (t2-t1)
-
-    print "internal again! sleepbefore1"
-    t1 <- evTime
-    sleep 500000
-    t2 <- evTime
-    print (t2-t1)
-    print "begin"
+    sync 3 1
+    print 4
+    let n = 4500000::Foreign.C.Types.CDouble
     t <- timeInMicros
-    let n = 3000000::Foreign.C.Types.CDouble
     res <- input_loop n t []
 
     let dts = reverse $ deltas easy4
     let r = reverse res
-   -- print d
-   -- print r
-    --print (analyze [100,150,200,400] [100,120,190,405])
-
-    -- timestamps' :: ([Int],Int) -> Int -> ([Int],Int)
-    let timestamps' (acc,t) dt = (t:acc, t+dt)
-    let timestamps dts = (fst(foldl timestamps' ([],0) dts))
-
     print (timestamps dts)
     print (timestamps r)
     print (analyze (timestamps dts)  (timestamps r))
