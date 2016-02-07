@@ -48,9 +48,6 @@ timestamps' (acc,t) dt = (t:acc, t+dt)
 timestamps dts = (fst(foldl timestamps' ([],(head dts)) dts))
 
 main = do
-    let easy4 = ((4.0,4.0),60.0,[1,1,1,1])
-    let easy3 = ((3.0,4.0),60.0,[1,1,1])
-
     let poll n = do
         stdinWatcher <- mkEvIo
         timeoutWatcher <- mkEvTimer
@@ -82,22 +79,28 @@ main = do
                 else do
                      return dts
 
-    let sync x y = do
+    let sync bpm x y = do
         if x < 1
             then
                 return ()
             else do
                 print y
-                usleep 1000000
-                sync (x-1) (y+1)
+                usleep (bpm*1000000 `quot` 60)
+                sync bpm (x-1) (y+1)
                 return ()
    -- forkProcess (play (deltas easy4))
-    sync 1 3
+    let easy4 = ((4,4),60,[1,1]) -- ,1,1,1])
+    let easy3 = ((3,4),60,[1,1,1])
+    let pName = easy4
+
+    let dur = realToFrac (
+         (foldl (+) 0 (deltas pName)) + toler)::Foreign.C.Types.CDouble
+    let (_,bpm,_) = pName
+    sync (floor bpm) 1 3
     print 4
-    let n = 4500000::Foreign.C.Types.CDouble
     t <- timeInMicros
-    res <- input_loop n t []
-    let ref_dts = reverse $ deltas easy4
+    res <- input_loop dur t []
+    let ref_dts = reverse $ deltas pName
     let input_dts = reverse res
     print "deltas"
     print ref_dts
