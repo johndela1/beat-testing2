@@ -71,14 +71,14 @@ main = do
         play dts
 
     let timeInMicros = numerator . toRational . (* 1000000) <$> getPOSIXTime
-    let input_loop n t1 dts = do
-            poll n
+    let input_loop dur t1 dts = do
+            poll dur
             t2 <- timeInMicros
             let dt = fromInteger (t2-t1)
-            if (n-dt) > 0
+            if (dur-dt) > 0
                 then do
                     (do getChar; return ())
-                    input_loop (n-dt) t2 ((ceiling dt):dts)
+                    input_loop (dur-dt) t2 ((ceiling dt):dts)
                 else do
                      return dts
 
