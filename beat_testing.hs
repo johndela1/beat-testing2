@@ -4,21 +4,20 @@ import Data.Function
 import System.IO
 import Data.Time.Clock.POSIX
 import System.Posix.Process
-import Control.Concurrent
 import Network.Libev
 import Foreign.C.Types
 import System.Posix.Unistd
 
-toler = 400000 -- tolerance in ms
+toler = 250000 -- tolerance in microseconds
 deltas :: ((Float, Float),Float,[Int]) -> [Int]
-deltas ((nBeats, beat_unit),bpm,notes) = foo notes millisPerSubBeat
-   where millisPerBeat = 1000000*beat_unit/bpm*secInMin
-         millisPerSubBeat = millisPerBeat / nBeats
+deltas ((nBeats, beat_unit),bpm,notes) = foo notes uSecsPerSubBeat
+   where uSecsPerBeat = 1000000*beat_unit/bpm*secInMin
+         uSecsPerSubBeat = uSecsPerBeat / nBeats
          secInMin = 60
          foo [] _ = []
          foo (n:ns) t
-            | n==1 = (ceiling t):foo ns millisPerSubBeat
-            | n==0 = foo ns (t+millisPerSubBeat) 
+            | n==1 = (ceiling t):foo ns uSecsPerSubBeat
+            | n==0 = foo ns (t+uSecsPerSubBeat) 
 
 matches :: ([(Int,Int)],[Int],[Int]) -> Int -> ([(Int,Int)],[Int],[Int])
 matches (acc,ms,dts) t =
@@ -46,16 +45,12 @@ timeoutCb evLoopPtr evIoPtr revents = do
 
 timestamps' :: ([Int],Int) -> Int -> ([Int],Int)
 timestamps' (acc,t) dt = (t:acc, t+dt)
-timestamps dts = (fst(foldl timestamps' ([],0) dts))
+timestamps dts = (fst(foldl timestamps' ([],(head dts)) dts))
 
 main = do
     let easy4 = ((4.0,4.0),60.0,[1,1,1,1])
     let easy3 = ((3.0,4.0),60.0,[1,1,1])
 
---    print $ deltas easy4
- --   print $ deltas easy3
-    --print (analyze [100,150,200,400] [51, 140,190,405,600])
----------------------------------------------------
     let poll n = do
         stdinWatcher <- mkEvIo
         timeoutWatcher <- mkEvTimer
@@ -67,10 +62,10 @@ main = do
         evTimerInit timeoutWatcher timeoutCb_ (n/1000000) 0.0
         evTimerStart loop timeoutWatcher
         evLoop loop 0
----------------------------------------------------
-    let play [] = do threadDelay 1000000;return ()
+
+    let play [] = do usleep 1000000;return ()
     let play (dt:dts) = do
-        threadDelay dt
+        usleep dt
         print dt
         print "beep"
         play dts
@@ -82,10 +77,11 @@ main = do
             let dt = fromInteger (t2-t1)
             if (n-dt) > 0
                 then do
-                    print dt
                     (do getChar; return ())
-                    input_loop (n-dt) t2 (ceiling dt:dts)
-                else return dts
+                    input_loop (n-dt) t2 ((ceiling dt):dts)
+                else do
+                     return dts
+
     let sync x y = do
         if x < 1
             then
@@ -96,15 +92,19 @@ main = do
                 sync (x-1) (y+1)
                 return ()
    -- forkProcess (play (deltas easy4))
-    sync 3 1
+    sync 1 3
     print 4
     let n = 4500000::Foreign.C.Types.CDouble
     t <- timeInMicros
     res <- input_loop n t []
-
-    let dts = reverse $ deltas easy4
-    let r = reverse res
-    print (timestamps dts)
-    print (timestamps r)
-    print (analyze (timestamps dts)  (timestamps r))
+    let ref_dts = reverse $ deltas easy4
+    let input_dts = reverse res
+    print "deltas"
+    print ref_dts
+    print input_dts
+    print "timestamps"
+    print (timestamps ref_dts)
+    print (timestamps input_dts)
+    print "analysis"
+    print (analyze (timestamps ref_dts)  (timestamps input_dts))
     print "done"
