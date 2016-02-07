@@ -85,11 +85,11 @@ main = do
                 return ()
             else do
                 print y
-                usleep (bpm*1000000 `quot` 60)
+                usleep (60*1000000 `quot` bpm)
                 sync bpm (x-1) (y+1)
                 return ()
    -- forkProcess (play (deltas easy4))
-    let easy4 = ((4,4),60,[1,1]) -- ,1,1,1])
+    let easy4 = ((4,4),120,[1,1]) -- ,1,1,1])
     let easy3 = ((3,4),60,[1,1,1])
     let pName = easy4
 
