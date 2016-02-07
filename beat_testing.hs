@@ -60,12 +60,15 @@ main = do
         evTimerStart loop timeoutWatcher
         evLoop loop 0
 
-    let play [] = do usleep 1000000;return ()
-    let play (dt:dts) = do
+    --let play [] bpm = do usleep (bpm*1000000 `quot` bpm);return ()
+    let play (dt:dts) bpm = do
         usleep dt
         print dt
         print "beep"
-        play dts
+        if dts == []
+            then do usleep (bpm*1000000 `quot` bpm);return ()
+     --       then return()
+            else play dts bpm
 
     let timeInMicros = numerator . toRational . (* 1000000) <$> getPOSIXTime
     let input_loop dur t1 dts = do
@@ -88,8 +91,7 @@ main = do
                 usleep (60*1000000 `quot` bpm)
                 sync bpm (x-1) (y+1)
                 return ()
-   -- forkProcess (play (deltas easy4))
-    let easy4 = ((4,4),120,[1,1]) -- ,1,1,1])
+    let easy4 = ((4,4),60,[1,1,1,1])
     let easy3 = ((3,4),60,[1,1,1])
     let pName = easy4
 
@@ -98,8 +100,10 @@ main = do
     let (_,bpm,_) = pName
     sync (floor bpm) 1 3
     print 4
+    forkProcess (play (deltas pName) (floor bpm))
     t <- timeInMicros
     res <- input_loop dur t []
+    print "----------- summary --------------"
     let ref_dts = reverse $ deltas pName
     let input_dts = reverse res
     print "deltas"
@@ -110,4 +114,3 @@ main = do
     print (timestamps input_dts)
     print "analysis"
     print (analyze (timestamps ref_dts)  (timestamps input_dts))
-    print "done"
