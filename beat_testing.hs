@@ -9,14 +9,14 @@ import Foreign.C.Types
 import System.Posix.Unistd
 
 toler = 250000 -- tolerance in microseconds
-deltas :: ((Float, Float),Float,[Int]) -> [Int]
+deltas :: ((Int, Int),Int,[Int]) -> [Int]
 deltas ((nBeats, beatUnit),bpm,notes) = foo notes uSecsPerSubBeat
-   where uSecsPerBeat = 1000000*beatUnit/bpm*secsInMin
-         uSecsPerSubBeat = uSecsPerBeat / nBeats
+   where uSecsPerBeat = 1000000*beatUnit `quot` bpm*secsInMin
+         uSecsPerSubBeat = uSecsPerBeat  `quot` nBeats
          secsInMin = 60
          foo [] _ = []
          foo (n:ns) t
-            | n==1 = (ceiling t):foo ns uSecsPerSubBeat
+            | n==1 = t:foo ns uSecsPerSubBeat
             | n==0 = foo ns (t+uSecsPerSubBeat) 
 
 matches :: ([(Int,Int)],[Int],[Int]) -> Int -> ([(Int,Int)],[Int],[Int])
@@ -92,18 +92,18 @@ main = do
     let easy23 = ((6,4),200,concat(take 2 $ repeat [1,0,0,1,0,0,1,1,0,1,0,0]))
     let easy3 = ((3,4),100,[1,1,1])
     let pName = easy4
+    let ref_dts = reverse $ deltas pName
 
     let dur = realToFrac (
-         (foldl (+) 0 (deltas pName)) + toler)::Foreign.C.Types.CDouble
+         (foldl (+) 0 ref_dts) + toler)::Foreign.C.Types.CDouble
     let ((nBeat,_),bpm,_) = pName
-    sync (floor bpm) (nBeat-1) 1
+    sync bpm (nBeat-1) 1
     print nBeat
-    forkProcess (play (deltas pName) (floor bpm))
+    forkProcess (play ref_dts bpm)
 
     t <- timeInMicros
     res <- input_loop dur t []
     print "----------- summary --------------"
-    let ref_dts = reverse $ deltas pName
     let input_dts = reverse res
     print "deltas"
     print ref_dts
