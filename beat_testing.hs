@@ -9,11 +9,12 @@ import Foreign.C.Types
 import System.Posix.Unistd
 
 toler = 250000 -- tolerance in microseconds
+secsInMin = 60
+
 deltas :: ((Int, Int),Int,[Int]) -> [Int]
 deltas ((nBeats, beatUnit),bpm,notes) = foo notes uSecsPerSubBeat
    where uSecsPerBeat = 1000000*beatUnit `quot` bpm*secsInMin
          uSecsPerSubBeat = uSecsPerBeat  `quot` nBeats
-         secsInMin = 60
          foo [] _ = []
          foo (n:ns) t
             | n==1 = t:foo ns uSecsPerSubBeat
@@ -85,7 +86,7 @@ main = do
                 return ()
             else do
                 print y
-                usleep (60*1000000 `quot` bpm)
+                usleep (secsInMin*1000000 `quot` bpm)
                 sync bpm (x-1) (y+1)
                 return ()
     let easy4 = ((4,4),120,[1,1,1,1])
