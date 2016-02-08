@@ -81,14 +81,16 @@ main = do
                      return dts
 
     let sync bpm x y = do
-        if x < 1
-            then
+        if x <= 1
+            then do
+                print y
                 return ()
             else do
                 print y
                 usleep (secsInMin*1000000 `quot` bpm)
                 sync bpm (x-1) (y+1)
                 return ()
+
     let easy4 = ((4,4),120,[1,1,1,1])
     let easy23 = ((6,4),200,concat(take 2 $ repeat [1,0,0,1,0,0,1,1,0,1,0,0]))
     let easy3 = ((3,4),100,[1,1,1])
@@ -98,8 +100,7 @@ main = do
     let dur = realToFrac (
          (foldl (+) 0 ref_dts) + toler)::Foreign.C.Types.CDouble
     let ((nBeat,_),bpm,_) = pName
-    sync bpm (nBeat-1) 1
-    print nBeat
+    sync bpm nBeat 1
     forkProcess (play ref_dts bpm)
 
     t <- timeInMicros
