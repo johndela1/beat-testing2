@@ -25,7 +25,7 @@ matches (acc,extr,dts) t =
     if (close best t)
         then ((best,t-best):acc,extr,(delete best dts))
         else (acc,t:extr,dts)
-    where best = if dts==[] then 9999999 else bestMatch t dts
+    where best = if null dts then 9999999 else bestMatch t dts
           close t1 t2 = abs (t1-t2) < toler
           bestMatch t = head.sortBy (compare `on`abs.(t-))
 analyze dts = foldl  matches  ([],[],dts)
@@ -46,7 +46,7 @@ timeoutCb evLoopPtr evIoPtr revents = do
 
 timestamps' :: ([Int],Int) -> Int -> ([Int],Int)
 timestamps' (acc,t) dt = (t:acc, t+dt)
-timestamps dts = (fst(foldl timestamps' ([],(head dts)) dts))
+timestamps dts = fst $ foldl timestamps' ([],(head dts)) dts
 
 ms x =  quot x 1000
 analysis (a,e,m) = "analysis:  " ++ show (map (\(x,y)->(ms x,ms y)) a)
@@ -71,7 +71,7 @@ main = do
     let play (dt:dts) bpm = do
         usleep dt
         print "beep"
-        if dts == []
+        if null dts
             then do usleep (bpm*1000000 `quot` bpm);return ()
             else play dts bpm
 
@@ -99,7 +99,8 @@ main = do
                 return ()
 
     let easy4 = ((4,4),120,[1,1,1,1])
-    let easy23 = ((6,4),200,concat(take 2 $ repeat [1,0,0,1,0,0,1,1,0,1,0,0]))
+    let easy23 = ((6,4),200,notes)
+            where notes = concat . take 2 . repeat $ [1,0,0,1,0,0,1,1,0,1,0,0]
     let easy3 = ((3,4),100,[1,1,1])
     let pName = easy4
     let ref_dts = reverse $ deltas pName
