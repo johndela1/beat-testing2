@@ -48,6 +48,13 @@ timestamps' :: ([Int],Int) -> Int -> ([Int],Int)
 timestamps' (acc,t) dt = (t:acc, t+dt)
 timestamps dts = (fst(foldl timestamps' ([],(head dts)) dts))
 
+ms x =  quot x 1000
+analysis (a,e,m) = "analysis:  " ++ show (map (\(x,y)->(ms x,ms y)) a)
+err (a,e,m) =      "total err: " ++ show (sum (map (\(_,y)->(abs$ms y)) a))
+missed (a,e,m) =   "missed:    " ++ show (map (\x->ms x) m)
+extra (a,e,m) =    "extra:     " ++ show (map (\x->ms x) e)
+report raw = unlines (map ($raw) [analysis,err,missed,extra])
+
 main = do
     let poll n = do
         stdinWatcher <- mkEvIo
@@ -105,7 +112,6 @@ main = do
 
     t <- timeInMicros
     res <- input_loop dur t []
-    print "----------- summary --------------"
     let input_dts = reverse res
     print "deltas"
     print ref_dts
@@ -115,3 +121,5 @@ main = do
     print (timestamps input_dts)
     print "analysis"
     print (analyze (timestamps ref_dts)  (timestamps input_dts))
+    putStrLn "----------- summary --------------"
+    putStrLn (report (analyze (timestamps ref_dts) (timestamps input_dts)))
