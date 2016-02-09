@@ -21,10 +21,10 @@ deltas ((nBeats, beatUnit),bpm,notes) = foo notes uSecsPerSubBeat
             | n==0 = foo ns (t+uSecsPerSubBeat) 
 
 matches :: ([(Int,Int)],[Int],[Int]) -> Int -> ([(Int,Int)],[Int],[Int])
-matches (acc,ms,dts) t =
+matches (acc,extr,dts) t =
     if (close best t)
-        then ((best,t-best):acc,ms,(delete best dts))
-        else (acc,t:ms,dts)
+        then ((best,t-best):acc,extr,(delete best dts))
+        else (acc,t:extr,dts)
     where best = if dts==[] then 9999999 else bestMatch t dts
           close t1 t2 = abs (t1-t2) < toler
           bestMatch t = head.sortBy (compare `on`abs.(t-))
