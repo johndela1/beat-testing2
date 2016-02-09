@@ -25,9 +25,9 @@ matches (acc,extr,dts) t =
     if (close best t)
         then ((best,t-best):acc,extr,(delete best dts))
         else (acc,t:extr,dts)
-    where best = if null dts then 9999999 else bestMatch t dts
+    where best = bestMatch dts
           close t1 t2 = abs (t1-t2) < toler
-          bestMatch t = head.sortBy (compare `on`abs.(t-))
+          bestMatch = head.sortBy (compare `on`abs.(t-))
 analyze dts = foldl  matches  ([],[],dts)
 
 data Song = Int
