@@ -8,22 +8,23 @@ main :: IO ()
 main = do
   let timeInMicros = do
             t <- evTime
-            return (floor (t * 1000000))
-  let bar avg decay t1 = do
+            return (floor (t * 1e6))
+  let audioDts acc avg decay t1 n = do
         input <- BL.getContents
         let v = fromIntegral (runGet getWord32le input)
-        if v < 2140000000 && decay == 0
-            then do
-                t2 <- timeInMicros
-                print (quot (t2-t1) 1000)
-                bar v 15 t2
-                return ()
-            else do
-                bar v (if decay == 0 then 0 else (decay-1)) t1
-                return ()
+        if n == 0
+            then return acc
+            else 
+                if v < (214*1e7) && decay == 0
+                    then do
+                        t2 <- timeInMicros
+                        audioDts  ((t2-t1):acc) v 15 t2 (n-1)
+                    else do
+                        audioDts acc v (if decay == 0 then 0 else (decay-1)) t1 n
 
   t1 <- timeInMicros
-  bar 0 0 t1
+  res <- (audioDts [] 0 0 t1 4)
+  print res
   print "hey"
 -- rec -c1 -t sox  -e signed-integer -r 48k - | play -c 1 -t sox -e signed-integer  -r 48k -
 -- :w |!ghc dsp.hs && rec -t raw -e unsigned-integer -b 32 -q - | ./dsp
