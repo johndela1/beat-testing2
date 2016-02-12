@@ -7,6 +7,9 @@ import System.Posix.Process
 import Network.Libev
 import Foreign.C.Types
 import System.Posix.Unistd
+import System.Process
+import qualified Data.ByteString.Lazy as BL
+import Data.Binary.Get
 
 toler = 250000 -- tolerance in microseconds
 secsInMin = 60
@@ -97,6 +100,21 @@ main = do
                 usleep (secsInMin*1000000 `quot` bpm)
                 sync bpm (x-1) (y+1)
                 return ()
+    let timeInMicros = do
+            t <- evTime
+            return (floor (t * 1e6))
+    let audioDts acc avg decay t1 n = do
+        input <- BL.getContents
+        let v = fromIntegral (runGet getWord32le input)
+        if n == 0
+            then return acc
+            else 
+                if v < (214*1e7) && decay == 0
+                    then do
+                        t2 <- timeInMicros
+                        audioDts  ((t2-t1):acc) v 15 t2 (n-1)
+                    else do
+                        audioDts acc v (if decay == 0 then 0 else (decay-1)) t1 n
 
     let easy4 = ((4,4),120,[1,1,1,1])
     let easy23 = ((6,4),200,notes)
@@ -108,11 +126,16 @@ main = do
     let dur = realToFrac (
          (foldl (+) 0 ref_dts) + toler)::Foreign.C.Types.CDouble
     let ((nBeat,_),bpm,_) = pName
+
+    --(_, Just hout, _, _) <-
+     --     createProcess (proc "rec" ["-t raw","-e unsigned-integer","-b 32","-q","-"]){ std_out = CreatePipe }
     sync bpm nBeat 1
     forkProcess (play ref_dts bpm)
 
     t <- timeInMicros
-    res <- input_loop dur t []
+   --  res <- input_loop dur t []
+
+    res <- (audioDts [] 0 0 t 4)
     let input_dts = reverse res
     print "deltas"
     print ref_dts
@@ -124,3 +147,19 @@ main = do
     print (analyze (timestamps ref_dts)  (timestamps input_dts))
     putStrLn "----------- summary --------------"
     putStrLn (report (analyze (timestamps ref_dts) (timestamps input_dts)))
+
+
+
+
+{--
+fact = 1/2
+smooth old new = old * fact + new * (1-fact)
+main :: IO ()
+main = do
+
+  t1 <- timeInMicros
+  print res
+  print "hey"
+-- rec -c1 -t sox  -e signed-integer -r 48k - | play -c 1 -t sox -e signed-integer  -r 48k -
+-- :w |!ghc dsp.hs && rec -t raw -e unsigned-integer -b 32 -q - | ./dsp
+--}
