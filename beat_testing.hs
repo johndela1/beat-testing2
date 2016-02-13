@@ -109,9 +109,10 @@ main = do
         if n == 0
             then return acc
             else 
-                if v < (214*1e7) && decay == 0
+                if v < (213*1e7) && decay == 0
                     then do
                         t2 <- timeInMicros
+                        print (t2-t1)
                         audioDts  ((t2-t1):acc) v 15 t2 (n-1)
                     else do
                         audioDts acc v (if decay == 0 then 0 else (decay-1)) t1 n
@@ -135,7 +136,7 @@ main = do
     t <- timeInMicros
    --  res <- input_loop dur t []
 
-    res <- (audioDts [] 0 0 t 4)
+    res <- (audioDts [] 0 0 (t+250000) 4)  -- the + 250000 is a shim for syncing
     let input_dts = reverse res
     print "deltas"
     print ref_dts
