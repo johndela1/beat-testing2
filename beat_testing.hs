@@ -14,7 +14,22 @@ import Data.Binary.Get
 toler = 250000 -- tolerance in microseconds
 secsInMin = 60
 
-deltas :: ((Int, Int),Int,[Int]) -> [Int]
+type Meter = (Int, Int)
+type Bpm = Int
+type Notes = [Int]
+type Song = (Meter, Bpm, Notes)
+
+type Delta = Int
+type Deltas = [Delta]
+type Timestamp = Int
+type Timestamps = [Timestamp]
+
+type Err = [(Int, Int)]
+type Missed = [Int]
+type Extra = [Int]
+type Analysis = (Err, Missed, Extra)
+
+deltas :: Song -> Deltas
 deltas ((nBeats, beatUnit),bpm,notes) = foo notes uSecsPerSubBeat
    where uSecsPerBeat = 1000000*beatUnit `quot` bpm*secsInMin
          uSecsPerSubBeat = uSecsPerBeat  `quot` nBeats
@@ -23,17 +38,21 @@ deltas ((nBeats, beatUnit),bpm,notes) = foo notes uSecsPerSubBeat
             | n==1 = t:foo ns uSecsPerSubBeat
             | n==0 = foo ns (t+uSecsPerSubBeat) 
 
-matches :: ([(Int,Int)],[Int],[Int]) -> Int -> ([(Int,Int)],[Int],[Int])
-matches (acc,extr,dts) t =
+matches :: Analysis -> Timestamp -> Analysis
+matches (acc,extr,tss) t =
     if (close best t)
-        then ((best,t-best):acc,extr,(delete best dts))
-        else (acc,t:extr,dts)
-    where best = bestMatch dts
+        then ((best,t-best):acc,extr,(delete best tss))
+        else (acc,t:extr,tss)
+    where best = bestMatch tss
           close t1 t2 = abs (t1-t2) < toler
           bestMatch = head.sortBy (compare `on`abs.(t-))
-analyze dts = foldl  matches  ([],[],dts)
 
-data Song = Int
+timestamps :: Deltas -> Timestamps
+timestamps dts = fst $ foldl (\(acc,t) dt -> (t:acc, t+dt)) ([],(head dts)) dts
+
+analyze :: Deltas -> Deltas -> Analysis
+analyze dts = foldl  matches  ([],[],tss)
+    where tss = timestamps dts
 
 stdinCb :: IoCallback
 stdinCb evLoopPtr evIoPtr revents = do
@@ -47,15 +66,13 @@ timeoutCb evLoopPtr evIoPtr revents = do
   --putStrLn "timeout"
   evUnloop evLoopPtr 1 {- 1 = EVUNLOOP_ONE -}
 
-timestamps' :: ([Int],Int) -> Int -> ([Int],Int)
-timestamps' (acc,t) dt = (t:acc, t+dt)
-timestamps dts = fst $ foldl timestamps' ([],(head dts)) dts
-
 ms x =  quot x 1000
 analysis (a,e,m) = "analysis:  " ++ show (map (\(x,y)->(ms x,ms y)) a)
 err (a,e,m) =      "total err: " ++ show (sum (map (\(_,y)->(abs$ms y)) a))
 missed (a,e,m) =   "missed:    " ++ show (map (\x->ms x) m)
 extra (a,e,m) =    "extra:     " ++ show (map (\x->ms x) e)
+
+report :: Analysis -> String
 report raw = unlines (map ($raw) [analysis,err,missed,extra])
 
 main = do
@@ -134,9 +151,9 @@ main = do
     forkProcess (play ref_dts bpm)
 
     t <- timeInMicros
-   --  res <- input_loop dur t []
+    res <- input_loop dur t []
 
-    res <- (audioDts [] 0 0 (t+250000) 4)  -- the + 250000 is a shim for syncing
+    -- res <- (audioDts [] 0 0 (t+250000) 4)  -- the + 250000 is a shim for syncing
     let input_dts = reverse res
     print "deltas"
     print ref_dts
@@ -144,13 +161,8 @@ main = do
     print "timestamps"
     print (timestamps ref_dts)
     print (timestamps input_dts)
-    print "analysis"
-    print (analyze (timestamps ref_dts)  (timestamps input_dts))
     putStrLn "----------- summary --------------"
-    putStrLn (report (analyze (timestamps ref_dts) (timestamps input_dts)))
-
-
-
+    putStrLn (report (analyze ref_dts (timestamps input_dts)))
 
 {--
 fact = 1/2
