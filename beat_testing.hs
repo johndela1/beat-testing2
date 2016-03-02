@@ -20,16 +20,14 @@ type Notes = [Int]
 type Song = (Meter, Bpm, Notes)
 
 type Delta = Int
-type Deltas = [Delta]
 type Timestamp = Int
-type Timestamps = [Timestamp]
 
 type Err = [(Int, Int)]
 type Missed = [Int]
 type Extra = [Int]
 type Analysis = (Err, Missed, Extra)
 
-deltas :: Song -> Deltas
+deltas :: Song -> [Delta]
 deltas ((nBeats, beatUnit),bpm,notes) = foo notes uSecsPerSubBeat
    where uSecsPerBeat = 1000000*beatUnit `quot` bpm*secsInMin
          uSecsPerSubBeat = uSecsPerBeat  `quot` nBeats
@@ -47,10 +45,10 @@ matches (acc,extr,tss) t =
           close t1 t2 = abs (t1-t2) < toler
           bestMatch = head.sortBy (compare `on`abs.(t-))
 
-timestamps :: Deltas -> Timestamps
+timestamps :: [Delta] -> [Timestamp]
 timestamps dts = fst $ foldl (\(acc,t) dt -> (t:acc, t+dt)) ([],(head dts)) dts
 
-analyze :: Deltas -> Deltas -> Analysis
+analyze :: [Delta] -> [Delta] -> Analysis
 analyze dts = foldl  matches  ([],[],tss)
     where tss = timestamps dts
 
