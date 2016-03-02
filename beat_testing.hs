@@ -42,16 +42,17 @@ matches (acc,extr,tss) t =
     if (close best t)
         then ((best,t-best):acc,extr,(delete best tss))
         else (acc,t:extr,tss)
-    where best = bestMatch tss
-          close t1 t2 = abs (t1-t2) < toler
-          bestMatch = head.sortBy (compare `on`abs.(t-))
+  where
+    best = bestMatch tss
+    close t1 t2 = abs (t1-t2) < toler
+    bestMatch = head.sortBy (compare `on`abs.(t-))
 
 timestamps :: [Delta] -> [Timestamp]
 timestamps dts = fst $ foldl (\(acc,t) dt -> (t:acc, t+dt)) ([],(head dts)) dts
 
 analyze :: [Delta] -> [Delta] -> Analysis
 analyze dts = foldl  matches  ([],[],tss)
-    where tss = timestamps dts
+  where tss = timestamps dts
 
 stdinCb :: IoCallback
 stdinCb evLoopPtr evIoPtr revents = do
