@@ -12,6 +12,7 @@ import qualified Data.ByteString.Lazy as BL
 import Data.Binary.Get
 
 toler = 250000 -- tolerance in microseconds
+resolution = 1000000 -- tolerance in microseconds
 secsInMin = 60
 
 type Meter = (Int, Int)
@@ -28,13 +29,13 @@ type Extra = [Int]
 type Analysis = (Err, Missed, Extra)
 
 deltas :: Song -> [Delta]
-deltas ((nBeats, beatUnit),bpm,notes) = foo notes uSecsPerSubBeat
-   where uSecsPerBeat = 1000000*beatUnit `quot` bpm*secsInMin
-         uSecsPerSubBeat = uSecsPerBeat  `quot` nBeats
+deltas ((nBeats, beatUnit),bpm,notes) = foo notes perSubBeat
+   where perBeat = resolution*beatUnit `quot` bpm*secsInMin
+         perSubBeat = perBeat  `quot` nBeats
          foo [] _ = []
          foo (n:ns) t
-            | n==1 = t:foo ns uSecsPerSubBeat
-            | n==0 = foo ns (t+uSecsPerSubBeat) 
+            | n==1 = t:foo ns perSubBeat
+            | n==0 = foo ns (t+perSubBeat) 
 
 matches :: Analysis -> Timestamp -> Analysis
 matches (acc,extr,tss) t =
