@@ -29,13 +29,10 @@ type Extra = [Int]
 type Analysis = (Err, Missed, Extra)
 
 deltas :: Song -> [Delta]
-deltas ((nBeats, beatUnit),bpm,notes) = foo notes perSubBeat
-   where perBeat = resolution*beatUnit `quot` bpm*secsInMin
-         perSubBeat = perBeat  `quot` nBeats
-         foo [] _ = []
-         foo (n:ns) t
-            | n==1 = t:foo ns perSubBeat
-            | n==0 = foo ns (t+perSubBeat) 
+deltas ((nBeats, beatUnit),bpm,notes) = reverse $ (\(_,y) -> y)
+    (foldl (\(t,dts) n -> if n==0 then (t+period,dts) else (t,t:dts))
+           (period,[]) notes)
+  where period = beatUnit*resolution*secsInMin `quot` (bpm*nBeats)
 
 matches :: Analysis -> Timestamp -> Analysis
 matches (acc,extr,tss) t =
